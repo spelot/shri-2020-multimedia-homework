@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Luminance Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="../initVideo.js"></script>
+    <style>
+        #video {
+            width: 300px;
+            height: 200px;
+        }
+        #canvas {
+            width: 300px;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+
+<video id="video" controls muted autoplay playsinline></video>
+<br>
+<canvas id="canvas"></canvas>
+<div id="light-meter"></div>
+<script>
+
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const lightMeter = document.getElementById('light-meter');
+
+    initVideo(
+        video,
+        'http://localhost:9191/master?url=http%3A%2F%2Flocalhost%3A3102%2Fstreams%2Fhall%2Fmaster.m3u8',
+    );
+
+    // для работы в фоновом режиме не обязательно, чтобы canvas находился в DOM
+    // можно создать его через JS
+    // const canvas = document.createElement('canvas');
+
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+
+    // https://en.wikipedia.org/wiki/Relative_luminance
+    function luminance(r, g, b) {
+        return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    }
+
+    function loop() {
+        // рисуем видео в канвас размером 1x1
+        // при этом браузер аппаратно интерполирует картинку
+        ctx.drawImage(video, 0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        lightMeter.innerText = luminance(r, g, b).toFixed(2);
+
+        requestAnimationFrame(loop);
+    }
+    loop();
+
+</script>
+
+
+</body>
+</html>

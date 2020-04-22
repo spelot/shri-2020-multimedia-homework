@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Volume Meter Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="../initVideo.js"></script>
+    <style>
+        .video {
+            width: 300px;
+            height: 200px;
+        }
+
+        #volume-meter {
+            width: 300px;
+            height: 10px;
+            background: black;
+            transform-origin: left;
+        }
+    </style>
+</head>
+<body>
+
+<video id="video" class="video" controls muted autoplay playsinline webkit-playsinline></video>
+<br>
+<video id="video2" class="video" controls muted autoplay playsinline></video>
+<div id="volume-text"></div>
+<div id="volume-meter"></div>
+<script>
+
+    const video = document.getElementById('video');
+    const video2 = document.getElementById('video2');
+    const volumeText = document.getElementById('volume-text');
+    const volumeMeter = document.getElementById('volume-meter');
+
+    [
+        { video, src: 'http://localhost:9191/master?url=http%3A%2F%2Flocalhost%3A3102%2Fstreams%2Fcat%2Fmaster.m3u8' },
+        { video: video2, src: 'http://localhost:9191/master?url=http%3A%2F%2Flocalhost%3A3102%2Fstreams%2Fhall%2Fmaster.m3u8' },
+    ].forEach(({ video, src }) => initVideo(video, src));
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // создаем ChannelMerger, который позволяет "слить" несколько аудио-потоков в один
+    const merger = audioCtx.createChannelMerger(2);
+    merger.connect(audioCtx.destination);
+
+    [video, video2].forEach((videoSource) => {
+        const source = audioCtx.createMediaElementSource(videoSource);
+        source.connect(merger);
+    });
+
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 32;
+    merger.connect(analyser);
+
+    const streamData = new Uint8Array(analyser.frequencyBinCount);
+    function getVolume () {
+        // записываем данные в streamData
+        analyser.getByteFrequencyData(streamData);
+        // усредняем
+        let total = 0;
+        for (let i = 0; i < streamData.length; i++) {
+            total += streamData[i];
+        }
+        return streamData.reduce((acc, val) => acc + val, 0) / 255 / streamData.length;
+    }
+
+    function loop() {
+        const volume = getVolume();
+        volumeText.innerText = volume.toFixed(2);
+        volumeMeter.style.transform = `scaleX(${ volume })`;
+        requestAnimationFrame(loop);
+    }
+    loop();
+</script>
+
+</body>
+</html>

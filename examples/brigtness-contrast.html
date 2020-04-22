@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Brightness + Contrast Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="../initVideo.js"></script>
+    <style>
+        #video {
+            width: 300px;
+            height: 200px;
+        }
+
+        label {
+            width: 100px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<video id="video" controls muted autoplay playsinline></video>
+<br>
+<label for="brightness-input">Яркость</label>
+<input type="range" id="brightness-input" min="0" max="2" step="0.01">
+<label for="brightness-input" id="brightness-input-value">1</label>
+<br>
+<label for="contrast-input">Контраст</label>
+<input type="range" id="contrast-input" min="0" max="2" step="0.01">
+<label for="contrast-input" id="contrast-input-value">1</label>
+<script>
+
+    const video = document.getElementById('video');
+    const brightnessInput = document.getElementById('brightness-input');
+    const contrastInput = document.getElementById('contrast-input');
+    const contrastLabel = document.getElementById('contrast-input-value');
+    const brightnessLabel = document.getElementById('brightness-input-value');
+
+    initVideo(
+        video,
+        'http://localhost:9191/master?url=http%3A%2F%2Flocalhost%3A3102%2Fstreams%2Fdog%2Fmaster.m3u8',
+    );
+
+    function update() {
+        const brightness = brightnessInput.value;
+        const contrast = contrastInput.value;
+        video.style.filter = `brightness(${ brightness }) contrast(${ contrast })`;
+        brightnessLabel.innerText = brightness;
+        contrastLabel.innerText = contrast;
+    }
+
+    [brightnessInput, contrastInput].forEach((input) => {
+        input.addEventListener('input', update);
+    })
+
+</script>
+
+
+</body>
+</html>
